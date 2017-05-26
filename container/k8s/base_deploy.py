@@ -528,17 +528,20 @@ class K8sBaseDeploy(object):
 
     @staticmethod
     def expand_env_vars(env_variables):
-        """ Convert service environment attribute into dictionary of name/value pairs. """
+        """ Convert service environment attribute into dictionary of name/value pairs or mapping to value_from. """
         results = []
         if isinstance(env_variables, dict):
             results = [{'name': x, 'value': env_variables[x]} for x in list(env_variables.keys())]
         elif isinstance(env_variables, list):
             for evar in env_variables:
-                parts = evar.split('=', 1)
-                if len(parts) == 1:
-                    results.append({'name': parts[0], 'value': None})
-                elif len(parts) == 2:
-                    results.append({'name': parts[0], 'value': parts[1]})
+                if isinstance(evar, CommentedMap) and 'value_from' in evar:
+                    results.append({'name': evar.get('name'), 'valueFrom': evar.get('value_from')})
+                else:
+                    parts = evar.split('=', 1)
+                    if len(parts) == 1:
+                        results.append({'name': parts[0], 'value': None})
+                    elif len(parts) == 2:
+                        results.append({'name': parts[0], 'value': parts[1]})
         return results
 
     @staticmethod
