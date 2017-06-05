@@ -672,7 +672,7 @@ class Engine(BaseEngine):
 
     @log_runs
     @host_only
-    def build_conductor_image(self, base_path, base_image, cache=True):
+    def build_conductor_image(self, base_path, base_image, cache=True, volumes=None, environment=None):
         with utils.make_temp_dir() as temp_dir:
             logger.info('Building Docker Engine context...')
             tarball_path = os.path.join(temp_dir, 'context.tar')
@@ -717,11 +717,14 @@ class Engine(BaseEngine):
             tarball.add(os.path.join(req_yml_dir, 'conductor-requirements.yml'),
                         arcname='container-src/conductor-build/conductor-requirements.yml')
 
+            # TODO(marc-sensenich): Render the environment and volumes
             utils.jinja_render_to_temp(TEMPLATES_PATH,
                                        'conductor-dockerfile.j2', temp_dir,
                                        'Dockerfile',
                                        conductor_base=base_image,
-                                       docker_version=DOCKER_VERSION)
+                                       docker_version=DOCKER_VERSION,
+                                       environment=environment)
+
             tarball.add(os.path.join(temp_dir, 'Dockerfile'),
                         arcname='Dockerfile')
 

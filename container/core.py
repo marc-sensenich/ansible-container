@@ -122,6 +122,13 @@ def hostcmd_init(base_path, project=None, force=False, **kwargs):
                                  **context)
         logger.info('Ansible Container initialized.')
 
+def get_conductor_base(config):
+    conductor_base = config.get('settings', {}).get('conductor', {}).get('base')
+
+    if conductor_base is None:
+        conductor_base = config.get('settings', {}).get('conductor_base', DEFAULT_CONDUCTOR_BASE)
+
+    return conductor_base
 
 @host_only
 def hostcmd_build(base_path, project_name, engine_name, var_file=None,
@@ -142,8 +149,9 @@ def hostcmd_build(base_path, project_name, engine_name, var_file=None,
         if engine_obj.CAP_BUILD_CONDUCTOR:
             engine_obj.build_conductor_image(
                 base_path,
-                config.get('settings', {}).get('conductor_base', DEFAULT_CONDUCTOR_BASE),
-                cache=conductor_cache
+                get_conductor_base(config),
+                cache=conductor_cache,
+                environment=config.get('settings', {}).get('conductor', {}).get('environment', [])
             )
         else:
             logger.warning(u'%s does not support building the Conductor image.',

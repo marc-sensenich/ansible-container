@@ -165,7 +165,7 @@ class BaseEngine(object):
         raise NotImplementedError()
 
     @host_only
-    def build_conductor_image(self, base_path, base_image, cache=True):
+    def build_conductor_image(self, base_path, base_image, cache=True, volumes=None, environment=None):
         raise NotImplementedError()
 
     def get_runtime_volume_id(self, mount_point):

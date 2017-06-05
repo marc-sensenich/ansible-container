@@ -60,4 +60,8 @@ VOLUME /usr
 VOLUME /lib
 {% endif %}
 
-
+{% if environment is iterable and environment is not string %}
+{% for environment_variable in environment %}
+ENV {{ environment_variable.split('=')[0] }} {{ environment_variable.split('=')[1] }}
+{% endfor %}
+{% endif %}
