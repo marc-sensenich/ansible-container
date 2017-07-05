@@ -315,6 +315,23 @@ class K8sBaseDeploy(object):
                         container['volumeMounts'] = vol_mounts
                     if vols:
                         volumes += vols
+                elif key == 'downward_api':
+                    vols, vol_mounts, env_variables = self.get_k8s_downward_api(value, container['name'])
+
+                    if vol_mounts:
+                        if 'volumeMounts' not in container:
+                            container['volumeMounts'] = []
+
+                        container['volumeMounts'].extend(vol_mounts)
+
+                    if vols:
+                        volumes += vols
+
+                    if env_variables:
+                        if 'env' not in container:
+                            container['env'] = []
+
+                        container['env'].extend(env_variables)
                 elif key == 'working_dir':
                     container['workingDir'] = value
                 else:
@@ -624,6 +641,84 @@ class K8sBaseDeploy(object):
             ))
 
         return volumes, volume_mounts
+    
+    @classmethod
+    def get_k8s_downward_api(cls, downward_api_configs, container_name):
+        """ Given an array of Downward API mappings, add them to the volume mappings or environment """
+        volume_mounts = []
+        volumes = []
+        environment_variables = []
+
+        for downward_api_config in downward_api_configs:
+            if 'mount_path' in downward_api_config:
+                # TODO: Work through issues with emptyDir getting created instead of downwardAPI volume
+                pass
+                # mount_path = downward_api_config['mount_path']
+                # read_only = True
+                # volume_name = downward_api_config['name']
+
+                # if 'read_only' in downward_api_config:
+                #     read_only = downward_api_config['read_only']
+
+                # downward_api_volume = dict(items=[])
+
+                # for item in downward_api_config.get('items'):
+                #     downwardApiVolumeItem = dict(path=item.get('path'))
+                #     if 'object_field' in item:
+                #         downwardApiVolumeItem['fieldRef'] = cls.extract_object_field_ref(item['object_field'])
+                #     elif 'resource_field' in item:
+                #         if 'container_name' not in item:
+                #             item['container_name'] = container_name
+
+                #         downwardApiVolumeItem['resourceFieldRef'] = cls.extract_resource_field_ref(item['resource_field'])
+
+                #     downward_api_volume['items'].append(downwardApiVolumeItem)
+
+                # volume_mounts.append(dict(
+                #     mountPath=mount_path,
+                #     name=volume_name,
+                #     readOnly=read_only
+                # ))
+
+                # volumes.append(dict(
+                #     name=volume_name,
+                #     downwardApi=downward_api_volume
+                # ))
+            elif 'env_variable' in downward_api_config:
+                if 'resource_field' in downward_api_config:
+                    resource_field = downward_api_config['resource_field']
+                    value_from_ref = dict(resourceFieldRef=cls.extract_resource_field_ref(resource_field))
+
+                elif 'object_field' in downward_api_config:
+                    object_field = downward_api_config['object_field']
+                    value_from_ref = dict(fieldRef=cls.extract_object_field_ref(object_field))
+                
+                environment_variables.append(dict(
+                    name=downward_api_config['env_variable'],
+                    valueFrom=value_from_ref
+                ))
+
+        return volumes, volume_mounts, environment_variables
+    
+    @staticmethod
+    def extract_resource_field_ref(resource_field):
+        resourceFieldRef=dict(
+            resource=resource_field.get('resource'),
+        )
+
+        if resource_field.get('container_name'):
+            resourceFieldRef['containerName']=resource_field.get('container_name')
+                        
+        return resourceFieldRef
+    
+    @staticmethod
+    def extract_object_field_ref(object_field):
+        fieldRef=dict(
+            fieldPath=object_field.get('field_path'),
+            apiVersion=object_field.get('api_version', 'v1')
+        )
+
+        return fieldRef
 
     @classmethod
     def copy_attribute(cls, target, src_key, src_value):
