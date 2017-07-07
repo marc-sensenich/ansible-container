@@ -6,7 +6,7 @@
 
 ## Reasoning
 
-Some services are composed of multiple containers that are coupled and share resources to for a single cohesive service. Common cases of this are sidecar and ambassador containers. Within Ansible Container currently it is a single pod per service, which allows for the generation of the images used within these services separately and deployed to a server. However, the container.yml file is not able to act as a single source-controlled piece of code to define the state of the deployable application. Therefore, I propose allowing multiple containers to be declared per service. 
+Some services are composed of multiple containers that are coupled and share resources to for a single cohesive service. Common cases of this are sidecar and ambassador containers. Within Ansible Container currently it is a single pod per service, which allows for the generation of the images used within these services separately and deployed to a server. However, the container.yml file is not able to act as a single source-controlled piece of code to define the state of the deployable application.
 
 ## Declaring Multiple Containers Per Service
 
