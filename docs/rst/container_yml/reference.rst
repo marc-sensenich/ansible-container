@@ -220,6 +220,7 @@ cpu_quota             Limit the CPU CFS (Completely Fair Scheduler) quota
 devices               Map devices
 :ref:`depends_on`     Express dependency between services                      |checkmark|
 :ref:`dev_over`       Service level directives that apply only in development
+:ref:`downward_api`   Add Downward API information to the environment.         |checkmark|
 dns                   Custom DNS servers
 dns_search            Custom DNS search
 domainname            Set the FQDN
@@ -314,9 +315,58 @@ In this example, when ``ansible-container run`` is executed, the options found i
 take effect, and the running container will have its port 8000 mapped to the host's port 8888, and the host's working
 directory will be mounted to '/var/lib/static' in the container.
 
-The ``build`` and ``deploy`` commands ignore *dev_overrides*. When ``build`` executs, the running container
+The ``build`` and ``deploy`` commands ignore *dev_overrides*. When ``build`` executes, the running container
 does not have the host's working directory mounted, and the container port 8000 is mapped to the host's port 8000. And
 likewise, the ``deploy`` command will create a service using port 8000, and will not create any volumes for the container.
+
+.. _downward_api:
+
+downward_api
+..........
+
+Pods are able to expose information about itself to running Containers inside of the Pod.
+
+The Downward API allows for exposure of this information to the containers through environment variables.
+
+For a list of the available values that can be exposed through the environment refer to the `OpenShift <https://docs.openshift.com/container-platform/3.4/dev_guide/downward_api.html>`_ and `Kubernetes <https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/#capabilities-of-the-downward-api>`_, documentation
+
+For example, the following shows exposing the *Container memory request*, *Container CPU limit*, *Pod name*, *Pod IP*, and *Node name*:
+
+.. code-block:: yaml
+
+    version: '2'
+    services:
+      web:
+        from: centos:7
+        command: [nginx]
+        entrypoint: [/usr/bin/entrypoint.sh]
+        ports:
+          - 8000:8000
+        dev_overrides:
+          ports:
+            - 8888:8000
+          volumes:
+            - ${PWD}:/var/lib/static
+        downward_api:
+          - env_variable: MEM_REQUEST
+            resource_field:
+              resource: requests.memory
+          - env_variable: CPU_LIMIT
+            resource_field:
+              resource: limits.cpu
+              container_name: demo-container
+          - env_variable: POD_NAME
+            object_field:
+              field_path: metadata.name
+              api_version: v1
+          - env_variable: POD_NAME
+            object_field:
+              field_path: status.podIP
+              api_version: v1              
+          - env_variable: NODE_NAME
+            object_field:
+              field_path: spec.nodeName
+              api_version: v1
 
 .. _expose:
 
@@ -688,7 +738,7 @@ With the new options, the route for port 4443 will be updated with the following
 
 .. code-block:: yaml
 
-    apiVersoin: v1
+    apiVersion: v1
     kind: Route
     metadata:
       name: web-4443
